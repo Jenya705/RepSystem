@@ -1,0 +1,20 @@
+# Default reputation
+default-reputation: 0
+
+# Delay between giving rep
+delay: 3d
+
+messages:
+  neg-color: '&c'
+  pos-color: '&a'
+  zero-color: '&7'
+  plus-rep: '&a+rep to the player %player_nickname%, his reputation: %reputation%'
+  other-plus-rep: '&a%player_nickname% give you +rep, your reputation: %reputation%'
+  minus-rep: '&c-rep to the player %player_nickname%, his reputation: %reputation%'
+  other-minus-rep: "&c%player_nickname% give you -rep, your reputation: %reputation%"
+  player-rep: '&7Reputation of the player %player_nickname%: %reputation%'
+  no-perms: '&cYou do not have permissions to do that'
+  cant-rep-yourself: '&cYou can not do this with yourself'
+  player-not-online: "&cThis player is not online"
+  delay: "&cYou are on delay!"
+  nan: "&cArgument is not a number"

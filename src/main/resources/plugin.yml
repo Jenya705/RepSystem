@@ -1,0 +1,29 @@
+name: RepSystem
+version: '${version}'
+main: com.github.jenya705.repsystem.RepSystem
+api-version: 1.18
+authors: [ Jenya705 ]
+description: Reputation system
+commands:
+  rep:
+    permission: rep.command
+permissions:
+  rep.command:
+    default: true
+  rep.command.+:
+    default: true
+  rep.command.-:
+    default: true
+  rep.command.see:
+    default: true
+  rep.+.more:
+    default: op
+  rep.-.more:
+    default: op
+  rep.command.*:
+    default: op
+    children:
+      - rep.command.+
+      - rep.command.-
+      - rep.command.see
+      - rep.command
