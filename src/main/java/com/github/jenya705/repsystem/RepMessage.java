@@ -63,10 +63,10 @@ public class RepMessage {
 
     private String color(int value) {
         return value < 0 ?
-                plugin.getConfig().getString("neg-color", "&c") :
+                plugin.getConfig().getString("messages.neg-color", "&c") :
                 value > 0 ?
-                        plugin.getConfig().getString("pos-color", "&a") :
-                        plugin.getConfig().getString("zero-color", "&7");
+                        plugin.getConfig().getString("messages.pos-color", "&a") :
+                        plugin.getConfig().getString("messages.zero-color", "&7");
     }
 
     private Component message(String key, String... placeholders) {
