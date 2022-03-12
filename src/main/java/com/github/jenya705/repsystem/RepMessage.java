@@ -61,7 +61,7 @@ public class RepMessage {
         };
     }
 
-    private String color(int value) {
+    public String color(int value) {
         return value < 0 ?
                 plugin.getConfig().getString("messages.neg-color", "&c") :
                 value > 0 ?

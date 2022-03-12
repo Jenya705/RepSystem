@@ -1,9 +1,14 @@
 package com.github.jenya705.repsystem;
 
 import com.github.jenya705.repsystem.command.RootRepCommand;
+import com.github.jenya705.repsystem.lp.RepLPContext;
+import com.github.jenya705.repsystem.papi.RepPapiExpansion;
 import com.github.jenya705.repsystem.storage.RepStorage;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.Duration;
@@ -22,6 +27,13 @@ public final class RepSystem extends JavaPlugin {
         saveDefaultConfig();
         delay = getDuration("delay");
         storage = new RepStorage(this);
+        if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new RepPapiExpansion(this).register();
+        }
+        if (Bukkit.getPluginManager().getPlugin("LuckPerms") != null) {
+            LuckPerms luckPerms = LuckPermsProvider.get();
+            luckPerms.getContextManager().registerCalculator(new RepLPContext(this));
+        }
         getCommand("rep").setExecutor(new RootRepCommand(this));
     }
 

@@ -2,6 +2,9 @@ name: RepSystem
 version: '${version}'
 main: com.github.jenya705.repsystem.RepSystem
 api-version: 1.18
+softdepend:
+  - PlaceholderAPI
+  - LuckPerms
 authors: [ Jenya705 ]
 description: Reputation system
 commands:

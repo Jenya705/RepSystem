@@ -4,6 +4,12 @@ default-reputation: 0
 # Delay between giving rep
 delay: 3d
 
+# Context calculator values
+# This values will be registered as context to luckperms plugin
+lp-context:
+  - ">100"
+  - "<100"
+
 messages:
   neg-color: '&c'
   pos-color: '&a'

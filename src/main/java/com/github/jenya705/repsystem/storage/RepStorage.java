@@ -8,6 +8,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Jenya705
@@ -24,7 +25,7 @@ public class RepStorage {
         this.plugin = plugin;
         try (Reader reader = new FileReader(saveFile())) {
             JsonObject json = gson.fromJson(reader, JsonObject.class);
-            reputations = new HashMap<>();
+            reputations = new ConcurrentHashMap<>();
             reputationTimes = new HashMap<>();
             if (json == null) return;
             json.getAsJsonObject("reputations").entrySet().forEach(stringJsonElementEntry -> reputations.put(

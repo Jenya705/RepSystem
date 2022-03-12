@@ -15,12 +15,17 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+    maven {
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
 }
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
     compileOnly 'net.luckperms:api:5.4'
     compileOnly 'org.projectlombok:lombok:1.18.22'
+    compileOnly 'me.clip:placeholderapi:2.11.1'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
