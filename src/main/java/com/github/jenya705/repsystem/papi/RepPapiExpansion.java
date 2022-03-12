@@ -48,7 +48,6 @@ public class RepPapiExpansion extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
-        System.out.println(params + " " + player);
         boolean colored = params.startsWith(coloredPlayerReputation);
         if (colored || params.startsWith(playerReputation)) {
             String playerArg = colored ?

@@ -7,9 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -27,17 +25,19 @@ public class RepCommand implements CommandHandler {
     @Override
     public void exec(CommandSender sender, Iterator<String> args) {
         if (!args.hasNext()) return;
-        Player player = Bukkit.getPlayer(args.next());
-        if (player == null) {
+        String nickname = args.next();
+        Player player = Bukkit.getPlayer(nickname);
+        UUID uuid = plugin.getStorage().getUUID(nickname);
+        if (uuid == null) {
             sender.sendMessage(plugin.getMessage().getPlayerNotOnline());
             return;
         }
-        if (player.equals(sender)) {
+        if (Objects.equals(player, sender)) {
             sender.sendMessage(plugin.getMessage().getCanNotRepYourself());
             return;
         }
         int reputation = 1;
-        boolean skipDelay = false;
+        boolean isAdmin = false;
         if (args.hasNext()) {
             if (!sender.hasPermission("rep." + operation + ".more")) {
                 sender.sendMessage(plugin.getMessage().getNoPerms());
@@ -45,23 +45,26 @@ public class RepCommand implements CommandHandler {
             }
             try {
                 reputation = Integer.parseUnsignedInt(args.next());
-                skipDelay = true;
+                isAdmin = true;
             } catch (NumberFormatException e) {
                 sender.sendMessage(plugin.getMessage().getNan());
                 return;
             }
         }
-        if (!skipDelay && sender instanceof Player playerSender) {
-            if (!plugin.getStorage().checkDelay(player.getUniqueId(), playerSender.getUniqueId())) {
-                sender.sendMessage(plugin.getMessage().getDelay());
-                return;
-            }
-            plugin.getStorage().setDelay(player.getUniqueId(), playerSender.getUniqueId());
+        if (isAdmin) {
+            int resultReputation = plugin.getStorage().reputation(uuid) + reputation * coefficient;
+            plugin.getStorage().setReputation(uuid, resultReputation);
         }
-        int resultReputation = plugin.getStorage().reputation(player.getUniqueId()) + reputation * coefficient;
-        plugin.getStorage().setReputation(player.getUniqueId(), resultReputation);
-        sender.sendMessage(reputatorMessage.apply(player.getName(), resultReputation));
-        if (reputation == 1) player.sendMessage(getterMessage.apply(player.getName(), resultReputation));
+        else if (sender instanceof Player who) {
+            plugin.getStorage().giveReputation(uuid, who.getUniqueId(), coefficient > 0);
+        }
+        else {
+            sender.sendMessage("Only for players!");
+            return;
+        }
+        int resultReputation = plugin.getStorage().reputation(uuid);
+        sender.sendMessage(reputatorMessage.apply(nickname, resultReputation));
+        if (reputation == 1 && player != null) player.sendMessage(getterMessage.apply(sender.getName(), resultReputation));
     }
 
     @Override

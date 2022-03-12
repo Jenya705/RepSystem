@@ -3,9 +3,13 @@ package com.github.jenya705.repsystem.storage;
 import com.github.jenya705.repsystem.RepSystem;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,35 +17,50 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Jenya705
  */
-public class RepStorage {
+public class RepStorage implements Listener {
 
     private static final Gson gson = new Gson();
 
     private final RepSystem plugin;
-    private final Map<UUID, Integer> reputations;
-    private final Map<UUID, Map<UUID, Long>> reputationTimes;
+    private final Map<UUID, Integer> reputations = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<UUID, Boolean>> gives = new HashMap<>();
+    private final Map<String, UUID> nicknames = new HashMap<>();
 
     public RepStorage(RepSystem plugin) throws IOException {
         this.plugin = plugin;
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
         try (Reader reader = new FileReader(saveFile())) {
             JsonObject json = gson.fromJson(reader, JsonObject.class);
-            reputations = new ConcurrentHashMap<>();
-            reputationTimes = new HashMap<>();
             if (json == null) return;
-            json.getAsJsonObject("reputations").entrySet().forEach(stringJsonElementEntry -> reputations.put(
-                    UUID.fromString(stringJsonElementEntry.getKey()),
-                    stringJsonElementEntry.getValue().getAsInt()
-            ));
-            json.getAsJsonObject("times").entrySet().forEach(stringJsonElementEntry -> {
-                Map<UUID, Long> playerTimings = new HashMap<>();
-                stringJsonElementEntry.getValue().getAsJsonObject().entrySet().forEach(it -> playerTimings.put(
-                        UUID.fromString(it.getKey()), it.getValue().getAsLong()
-                ));
-                reputationTimes.put(
+            JsonObject jsonReputations = json.getAsJsonObject("reputations");
+            if (jsonReputations != null) {
+                jsonReputations.entrySet().forEach(stringJsonElementEntry -> reputations.put(
                         UUID.fromString(stringJsonElementEntry.getKey()),
-                        playerTimings
-                );
-            });
+                        stringJsonElementEntry.getValue().getAsInt()
+                ));
+            }
+            JsonObject givesJson = json.getAsJsonObject("gives");
+            if (givesJson != null) {
+                givesJson.entrySet().forEach(stringJsonElementEntry -> {
+                    Map<UUID, Boolean> playerReputationGave = new HashMap<>();
+                    stringJsonElementEntry.getValue().getAsJsonObject().entrySet().forEach(it ->
+                            playerReputationGave.put(
+                                    UUID.fromString(it.getKey()), it.getValue().getAsBoolean()
+                            )
+                    );
+                    gives.put(
+                            UUID.fromString(stringJsonElementEntry.getKey()),
+                            playerReputationGave
+                    );
+                });
+            }
+            JsonObject nicknamesJson = json.getAsJsonObject("nicknames");
+            if (nicknamesJson != null) {
+                nicknamesJson.entrySet().forEach(stringJsonElementEntry -> nicknames.put(
+                        stringJsonElementEntry.getKey(),
+                        UUID.fromString(stringJsonElementEntry.getValue().getAsString())
+                ));
+            }
         }
     }
 
@@ -56,31 +75,40 @@ public class RepStorage {
         reputations.put(uuid, reputation);
     }
 
-    public void setDelay(UUID reputationHolder, UUID whoSet) {
-        reputationTimes.putIfAbsent(reputationHolder, new HashMap<>());
-        reputationTimes.get(reputationHolder).put(whoSet, System.currentTimeMillis());
+    public void giveReputation(UUID to, UUID who, boolean plus) {
+        if (gives.containsKey(to) && gives.get(to).containsKey(who)) {
+            boolean wasPlus = gives.get(to).get(who);
+            if (wasPlus == plus) return;
+            int change = wasPlus ? -2 : 2;
+            setReputation(to, reputation(to) + change);
+        }
+        else {
+            gives.put(to, new HashMap<>());
+            setReputation(to, reputation(to) + (plus ? 1 : -1));
+        }
+        gives.get(to).put(who, plus);
     }
 
-    public boolean checkDelay(UUID reputationHolder, UUID whoSet) {
-        return !(reputationTimes.containsKey(reputationHolder) &&
-                reputationTimes.get(reputationHolder).containsKey(whoSet) &&
-                reputationTimes.get(reputationHolder).get(whoSet) + plugin.getDelay().toMillis() > System.currentTimeMillis()
-        );
+    public UUID getUUID(String nickname) {
+        return nicknames.get(nickname.toLowerCase(Locale.ROOT));
     }
 
     public void save() throws IOException {
         try (Writer writer = new FileWriter(saveFile())) {
             JsonObject json = new JsonObject();
-            JsonObject reps = new JsonObject();
-            reputations.forEach((uuid, integer) -> reps.addProperty(uuid.toString(), integer));
-            json.add("reputations", reps);
-            JsonObject times = new JsonObject();
-            reputationTimes.forEach((uuid, uuidLongMap) -> {
+            JsonObject reputationsJson = new JsonObject();
+            reputations.forEach((uuid, integer) -> reputationsJson.addProperty(uuid.toString(), integer));
+            json.add("reputations", reputationsJson);
+            JsonObject givesJson = new JsonObject();
+            gives.forEach((uuid, uuidLongMap) -> {
                 JsonObject playerTimes = new JsonObject();
                 uuidLongMap.forEach((uuid1, aLong) -> playerTimes.addProperty(uuid1.toString(), aLong));
-                times.add(uuid.toString(), playerTimes);
+                givesJson.add(uuid.toString(), playerTimes);
             });
-            json.add("times", times);
+            json.add("gives", givesJson);
+            JsonObject nicknamesJson = new JsonObject();
+            nicknames.forEach((s, uuid) -> nicknamesJson.addProperty(s, uuid.toString()));
+            json.add("nicknames", nicknamesJson);
             gson.toJson(json, writer);
         }
     }
@@ -89,6 +117,14 @@ public class RepStorage {
         File file = new File(plugin.getDataFolder(), "save.json");
         if (!file.exists()) file.createNewFile();
         return file;
+    }
+
+    @EventHandler
+    public void playerJoin(PlayerJoinEvent event) {
+        nicknames.put(
+                event.getPlayer().getName().toLowerCase(Locale.ROOT),
+                event.getPlayer().getUniqueId()
+        );
     }
 
 
